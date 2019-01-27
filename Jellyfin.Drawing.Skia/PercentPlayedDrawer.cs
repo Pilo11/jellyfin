@@ -2,13 +2,13 @@ using System;
 using MediaBrowser.Model.Drawing;
 using SkiaSharp;
 
-namespace Emby.Drawing
+namespace Jellyfin.Drawing.Skia
 {
     public static class PercentPlayedDrawer
     {
         private const int IndicatorHeight = 8;
 
-        public static void Process(SKCanvas canvas, ImageSize imageSize, double percent)
+        public static void Process(SKCanvas canvas, ImageDimensions imageSize, double percent)
         {
             using (var paint = new SKPaint())
             {
@@ -24,7 +24,7 @@ namespace Emby.Drawing
                 foregroundWidth /= 100;
 
                 paint.Color = SKColor.Parse("#FF52B54B");
-                canvas.DrawRect(SKRect.Create(0, (float)endY - IndicatorHeight, Convert.ToInt32(Math.Round(foregroundWidth)), (float)endY), paint);
+                canvas.DrawRect(SKRect.Create(0, (float)endY - IndicatorHeight, Convert.ToInt32(foregroundWidth), (float)endY), paint);
             }
         }
     }

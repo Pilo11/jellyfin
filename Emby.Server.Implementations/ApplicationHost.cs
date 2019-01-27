@@ -244,8 +244,6 @@ namespace Emby.Server.Implementations
         /// </summary>
         protected readonly SimpleInjector.Container Container = new SimpleInjector.Container();
 
-        protected ISystemEvents SystemEvents { get; set; }
-
         /// <summary>
         /// Gets the server configuration manager.
         /// </summary>
@@ -317,7 +315,7 @@ namespace Emby.Server.Implementations
         private IUserDataManager UserDataManager { get; set; }
         private IUserRepository UserRepository { get; set; }
         internal IDisplayPreferencesRepository DisplayPreferencesRepository { get; set; }
-        internal IItemRepository ItemRepository { get; set; }
+        internal SqliteItemRepository ItemRepository { get; set; }
 
         private INotificationManager NotificationManager { get; set; }
         private ISubtitleManager SubtitleManager { get; set; }
@@ -371,7 +369,6 @@ namespace Emby.Server.Implementations
             IFileSystem fileSystem,
             IEnvironmentInfo environmentInfo,
             IImageEncoder imageEncoder,
-            ISystemEvents systemEvents,
             INetworkManager networkManager)
         {
 
@@ -383,7 +380,6 @@ namespace Emby.Server.Implementations
             NetworkManager = networkManager;
             networkManager.LocalSubnetsFn = GetConfiguredLocalSubnets;
             EnvironmentInfo = environmentInfo;
-            SystemEvents = systemEvents;
 
             ApplicationPaths = applicationPaths;
             LoggerFactory = loggerFactory;
@@ -466,9 +462,8 @@ namespace Emby.Server.Implementations
         private static Tuple<Assembly, string> GetAssembly(Type type)
         {
             var assembly = type.GetTypeInfo().Assembly;
-            string path = null;
 
-            return new Tuple<Assembly, string>(assembly, path);
+            return new Tuple<Assembly, string>(assembly, null);
         }
 
         public virtual IStreamHelper CreateStreamHelper()
@@ -762,7 +757,6 @@ namespace Emby.Server.Implementations
             RegisterSingleInstance<IApplicationPaths>(ApplicationPaths);
 
             RegisterSingleInstance(JsonSerializer);
-            RegisterSingleInstance(SystemEvents);
 
             RegisterSingleInstance(LoggerFactory, false);
             RegisterSingleInstance(Logger);
@@ -779,7 +773,7 @@ namespace Emby.Server.Implementations
             IsoManager = new IsoManager();
             RegisterSingleInstance(IsoManager);
 
-            TaskManager = new TaskManager(ApplicationPaths, JsonSerializer, LoggerFactory, FileSystemManager, SystemEvents);
+            TaskManager = new TaskManager(ApplicationPaths, JsonSerializer, LoggerFactory, FileSystemManager);
             RegisterSingleInstance(TaskManager);
 
             RegisterSingleInstance(XmlSerializer);
@@ -836,9 +830,8 @@ namespace Emby.Server.Implementations
             DisplayPreferencesRepository = displayPreferencesRepo;
             RegisterSingleInstance(DisplayPreferencesRepository);
 
-            var itemRepo = new SqliteItemRepository(ServerConfigurationManager, this, JsonSerializer, LoggerFactory, assemblyInfo, FileSystemManager, EnvironmentInfo, TimerFactory);
-            ItemRepository = itemRepo;
-            RegisterSingleInstance(ItemRepository);
+            ItemRepository = new SqliteItemRepository(ServerConfigurationManager, this, JsonSerializer, LoggerFactory, assemblyInfo);
+            RegisterSingleInstance<IItemRepository>(ItemRepository);
 
             AuthenticationRepository = GetAuthenticationRepository();
             RegisterSingleInstance(AuthenticationRepository);
@@ -853,7 +846,7 @@ namespace Emby.Server.Implementations
             var musicManager = new MusicManager(LibraryManager);
             RegisterSingleInstance<IMusicManager>(new MusicManager(LibraryManager));
 
-            LibraryMonitor = new LibraryMonitor(LoggerFactory, TaskManager, LibraryManager, ServerConfigurationManager, FileSystemManager, TimerFactory, SystemEvents, EnvironmentInfo);
+            LibraryMonitor = new LibraryMonitor(LoggerFactory, TaskManager, LibraryManager, ServerConfigurationManager, FileSystemManager, TimerFactory, EnvironmentInfo);
             RegisterSingleInstance(LibraryMonitor);
 
             RegisterSingleInstance<ISearchEngine>(() => new SearchEngine(LoggerFactory, LibraryManager, UserManager));
@@ -956,7 +949,7 @@ namespace Emby.Server.Implementations
             ((UserManager)UserManager).Initialize();
 
             ((UserDataManager)UserDataManager).Repository = userDataRepo;
-            itemRepo.Initialize(userDataRepo, UserManager);
+            ItemRepository.Initialize(userDataRepo, UserManager);
             ((LibraryManager)LibraryManager).ItemRepository = ItemRepository;
         }
 

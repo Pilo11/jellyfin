@@ -13,6 +13,7 @@ using Emby.Server.Implementations;
 using Emby.Server.Implementations.EnvironmentInfo;
 using Emby.Server.Implementations.IO;
 using Emby.Server.Implementations.Networking;
+using Jellyfin.Drawing.Skia;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Model.Globalization;
@@ -96,7 +97,6 @@ namespace Jellyfin.Server
                 fileSystem,
                 environmentInfo,
                 new NullImageEncoder(),
-                new SystemEvents(),
                 new NetworkManager(_loggerFactory, environmentInfo)))
             {
                 appHost.Init();

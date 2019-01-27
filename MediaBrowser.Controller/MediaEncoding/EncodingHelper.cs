@@ -424,11 +424,9 @@ namespace MediaBrowser.Controller.MediaEncoding
                     if (state.VideoStream != null && state.VideoStream.Width.HasValue)
                     {
                         // This is hacky but not sure how to get the exact subtitle resolution
-                        double height = state.VideoStream.Width.Value;
-                        height /= 16;
-                        height *= 9;
+                        int height = Convert.ToInt32((double)state.VideoStream.Width.Value / 16.0 * 9.0);
 
-                        arg += string.Format(" -canvas_size {0}:{1}", state.VideoStream.Width.Value.ToString(CultureInfo.InvariantCulture), Convert.ToInt32(height).ToString(CultureInfo.InvariantCulture));
+                        arg += string.Format(" -canvas_size {0}:{1}", state.VideoStream.Width.Value.ToString(CultureInfo.InvariantCulture), height.ToString(CultureInfo.InvariantCulture));
                     }
 
                     var subtitlePath = state.SubtitleStream.Path;
@@ -1440,6 +1438,11 @@ namespace MediaBrowser.Controller.MediaEncoding
             if (string.Equals(outputVideoCodec, "h264_vaapi", StringComparison.OrdinalIgnoreCase) && outputSizeParam.Length == 0)
             {
                 outputSizeParam = ",format=nv12|vaapi,hwupload";
+
+                // Add parameters to use VAAPI with burn-in subttiles (GH issue #642)
+                if (state.SubtitleStream != null && state.SubtitleStream.IsTextSubtitleStream && state.SubtitleDeliveryMethod == SubtitleDeliveryMethod.Encode) {
+                    outputSizeParam += ",hwmap=mode=read+write+direct";
+                }
             }
 
             var videoSizeParam = string.Empty;
@@ -1743,6 +1746,12 @@ namespace MediaBrowser.Controller.MediaEncoding
 
                 filters.Add(subParam);
 
+                // Ensure proper filters are passed to ffmpeg in case of hardware acceleration via VA-API
+                // Reference: https://trac.ffmpeg.org/wiki/Hardware/VAAPI
+                if (string.Equals(outputVideoCodec, "h264_vaapi", StringComparison.OrdinalIgnoreCase))
+                {
+                    filters.Add("hwmap");
+                }
                 if (allowTimeStampCopy)
                 {
                     output += " -copyts";

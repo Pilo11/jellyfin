@@ -2,13 +2,13 @@ using System.Globalization;
 using MediaBrowser.Model.Drawing;
 using SkiaSharp;
 
-namespace Emby.Drawing
+namespace Jellyfin.Drawing.Skia
 {
     public static class UnplayedCountIndicator
     {
         private const int OffsetFromTopRightCorner = 38;
 
-        public static void DrawUnplayedCountIndicator(SKCanvas canvas, ImageSize imageSize, int count)
+        public static void DrawUnplayedCountIndicator(SKCanvas canvas, ImageDimensions imageSize, int count)
         {
             var x = imageSize.Width - OffsetFromTopRightCorner;
             var text = count.ToString(CultureInfo.InvariantCulture);

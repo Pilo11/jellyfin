@@ -1,13 +1,13 @@
 using MediaBrowser.Model.Drawing;
 using SkiaSharp;
 
-namespace Emby.Drawing
+namespace Jellyfin.Drawing.Skia
 {
     public static class PlayedIndicatorDrawer
     {
         private const int OffsetFromTopRightCorner = 38;
 
-        public static void DrawPlayedIndicator(SKCanvas canvas, ImageSize imageSize)
+        public static void DrawPlayedIndicator(SKCanvas canvas, ImageDimensions imageSize)
         {
             var x = imageSize.Width - OffsetFromTopRightCorner;
 
